@@ -70,6 +70,8 @@ public class ConfigurationActionImpl extends BaseConfigurationAction {
 		boolean requireCaptcha = ParamUtil.getBoolean(
 			actionRequest, "requireCaptcha");
 		String successURL = ParamUtil.getString(actionRequest, "successURL");
+		boolean requireUser = ParamUtil.getBoolean(
+			actionRequest, "requireUser");
 
 		boolean sendAsEmail = ParamUtil.getBoolean(
 			actionRequest, "sendAsEmail");
@@ -138,6 +140,7 @@ public class ConfigurationActionImpl extends BaseConfigurationAction {
 		preferences.setValue("title", title);
 		preferences.setValue("description", description);
 		preferences.setValue("requireCaptcha", String.valueOf(requireCaptcha));
+		preferences.setValue("requireUser", String.valueOf(requireUser));
 		preferences.setValue("successURL", successURL);
 		preferences.setValue("sendAsEmail", String.valueOf(sendAsEmail));
 		preferences.setValue("subject", subject);

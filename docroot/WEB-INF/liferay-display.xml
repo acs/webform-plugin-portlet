@@ -3,6 +3,6 @@
 
 <display>
 	<category name="category.tools">
-		<portlet id="1" />
+		<portlet id="webform" />
 	</category>
 </display>

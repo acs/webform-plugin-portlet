@@ -3,7 +3,7 @@
 
 <liferay-portlet-app>
 	<portlet>
-		<portlet-name>1</portlet-name>
+		<portlet-name>webform</portlet-name>
 		<icon>/icon.png</icon>
 		<configuration-action-class>com.liferay.webform.action.ConfigurationActionImpl</configuration-action-class>
 		<instanceable>true</instanceable>

@@ -41,6 +41,7 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portlet.PortletPreferencesFactoryUtil;
 import com.liferay.portlet.expando.model.ExpandoRow;
 import com.liferay.portlet.expando.service.ExpandoRowLocalServiceUtil;
@@ -49,6 +50,7 @@ import com.liferay.portlet.expando.service.ExpandoValueLocalServiceUtil;
 import com.liferay.util.bridges.jsp.JSPPortlet;
 import com.liferay.util.servlet.PortletResponseUtil;
 import com.liferay.webform.util.WebFormUtil;
+
 
 import java.io.IOException;
 
@@ -103,6 +105,11 @@ public class WebFormPortlet extends JSPPortlet {
 		String portletId = (String)actionRequest.getAttribute(
 			WebKeys.PORTLET_ID);
 
+        ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
+            WebKeys.THEME_DISPLAY);
+
+        Long userId =  themeDisplay.getUserId();
+
 		PortletPreferences preferences =
 			PortletPreferencesFactoryUtil.getPortletSetup(
 				actionRequest, portletId);
@@ -146,6 +153,8 @@ public class WebFormPortlet extends JSPPortlet {
 
 			fieldsMap.put(fieldLabel, actionRequest.getParameter("field" + i));
 		}
+
+		fieldsMap.put("userId", Long.toString(userId));
 
 		Set<String> validationErrors = null;
 

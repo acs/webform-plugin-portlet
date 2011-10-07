@@ -31,6 +31,7 @@ String title = PrefsParamUtil.getString(preferences, request, "title");
 String description = PrefsParamUtil.getString(preferences, request, "description");
 boolean requireCaptcha = PrefsParamUtil.getBoolean(preferences, request, "requireCaptcha");
 String successURL = PrefsParamUtil.getString(preferences, request, "successURL");
+boolean requireUser = PrefsParamUtil.getBoolean(preferences, request, "requireUser");
 
 boolean sendAsEmail = PrefsParamUtil.getBoolean(preferences, request, "sendAsEmail");
 String subject = PrefsParamUtil.getString(preferences, request, "subject");
@@ -150,6 +151,9 @@ if (WebFormUtil.getTableRowsCount(databaseTableName) > 0) {
 				<label for="<portlet:namespace />successURL"><liferay-ui:message key="redirect-url-on-success" /></label>
 
 				<input class="lfr-input-text" id="<portlet:namespace />successURL" name="<portlet:namespace />successURL" type="text" value="<%= HtmlUtil.toInputSafe(successURL) %>" />
+			</div>
+			<div class="ctrl-holder">
+				<label><liferay-ui:message key="require-user" /> <liferay-ui:input-checkbox param="requireUser" defaultValue="<%= requireUser %>" /></label>
 			</div>
 		</fieldset>
 
