@@ -7,7 +7,7 @@
 		<portlet-class>com.liferay.webform.portlet.WebFormPortlet</portlet-class>
 		<init-param>
 			<name>view-jsp</name>
-			<value>/view-pre.jsp</value>
+			<value>/view.jsp</value>
 		</init-param>
 		<expiration-cache>0</expiration-cache>
 		<supports>
