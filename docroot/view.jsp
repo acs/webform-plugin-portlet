@@ -22,7 +22,6 @@
  */
 %>
 
-<%@ include file="/init.jsp" %>
 
 <%
 String title = preferences.getValue("title", StringPool.BLANK);
