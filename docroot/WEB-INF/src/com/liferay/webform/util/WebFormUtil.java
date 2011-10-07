@@ -1,23 +1,15 @@
 /**
- * Copyright (c) 2000-2009 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
  *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
  */
 
 package com.liferay.webform.util;
@@ -26,8 +18,8 @@ import com.liferay.counter.service.CounterLocalServiceUtil;
 import com.liferay.mozilla.javascript.Context;
 import com.liferay.mozilla.javascript.Scriptable;
 import com.liferay.mozilla.javascript.ScriptableObject;
-import com.liferay.portal.PortalException;
-import com.liferay.portal.SystemException;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -52,46 +44,43 @@ import java.util.Map;
 import javax.portlet.PortletPreferences;
 
 /**
- * <a href="WebFormUtil.java.html"><b><i>View Source</i></b></a>
- *
  * @author Daniel Weisser
  * @author Jorge Ferrer
  * @author Alberto Montero
  * @author Julio Camarero
  * @author Brian Wing Shun Chan
- *
  */
 public class WebFormUtil {
 
 	public static final boolean VALIDATION_SCRIPT_ENABLED =
 		GetterUtil.getBoolean(PortletProps.get("validation.script.enabled"));
 
-	public static ExpandoTable addTable(String tableName)
+	public static ExpandoTable addTable(long companyId, String tableName)
 		throws PortalException, SystemException {
 
 		try {
 			ExpandoTableLocalServiceUtil.deleteTable(
-				WebFormUtil.class.getName(), tableName);
+				companyId, WebFormUtil.class.getName(), tableName);
 		}
 		catch (NoSuchTableException nste) {
 		}
 
 		return ExpandoTableLocalServiceUtil.addTable(
-			WebFormUtil.class.getName(), tableName);
+			companyId, WebFormUtil.class.getName(), tableName);
 	}
 
 	public static ExpandoTable checkTable(
-			String tableName, PortletPreferences preferences)
+			long companyId, String tableName, PortletPreferences preferences)
 		throws Exception {
 
 		ExpandoTable expandoTable = null;
 
 		try {
 			expandoTable = ExpandoTableLocalServiceUtil.getTable(
-				WebFormUtil.class.getName(), tableName);
+				companyId, WebFormUtil.class.getName(), tableName);
 		}
 		catch (NoSuchTableException nste) {
-			expandoTable = addTable(tableName);
+			expandoTable = addTable(companyId, tableName);
 
 			int i = 1;
 
@@ -108,10 +97,9 @@ public class WebFormUtil {
 				fieldLabel = preferences.getValue(
 					"fieldLabel" + i, StringPool.BLANK);
 			}
-
-			ExpandoColumnLocalServiceUtil.addColumn(
-					expandoTable.getTableId(), "userId",
-					ExpandoColumnConstants.STRING);
+            ExpandoColumnLocalServiceUtil.addColumn(
+                   expandoTable.getTableId(), "userId",
+                   ExpandoColumnConstants.STRING);
 		}
 
 		return expandoTable;
@@ -126,11 +114,11 @@ public class WebFormUtil {
 		return portletId + StringPool.UNDERLINE + formId;
 	}
 
-	public static int getTableRowsCount(String tableName)
+	public static int getTableRowsCount(long companyId, String tableName)
 		throws SystemException {
 
 		return ExpandoRowLocalServiceUtil.getRowsCount(
-			WebFormUtil.class.getName(), tableName);
+			companyId, WebFormUtil.class.getName(), tableName);
 	}
 
 	public static String[] split(String s) {

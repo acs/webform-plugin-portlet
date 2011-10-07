@@ -1,23 +1,15 @@
 /**
- * Copyright (c) 2000-2009 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
  *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
  */
 
 package com.liferay.webform.action;
@@ -26,6 +18,8 @@ import com.liferay.portal.kernel.portlet.BaseConfigurationAction;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -36,6 +30,9 @@ import com.liferay.webform.util.WebFormUtil;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 
+import java.util.Locale;
+import java.util.Map;
+
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
@@ -44,13 +41,10 @@ import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 
 /**
- * <a href="ConfigurationActionImpl.java.html"><b><i>View Source</i></b></a>
- *
  * @author Jorge Ferrer
  * @author Alberto Montero
  * @author Julio Camarero
  * @author Brian Wing Shun Chan
- *
  */
 public class ConfigurationActionImpl extends BaseConfigurationAction {
 
@@ -61,17 +55,16 @@ public class ConfigurationActionImpl extends BaseConfigurationAction {
 
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
 
-		if (!cmd.equals(Constants.UPDATE)) {
-			return;
-		}
+		Locale defaultLocale = LocaleUtil.getDefault();
+		String defaultLanguageId = LocaleUtil.toLanguageId(defaultLocale);
 
-		String title = ParamUtil.getString(actionRequest, "title");
-		String description = ParamUtil.getString(actionRequest, "description");
+		String title = ParamUtil.getString(
+			actionRequest, "title" + StringPool.UNDERLINE + defaultLanguageId);
 		boolean requireCaptcha = ParamUtil.getBoolean(
 			actionRequest, "requireCaptcha");
 		String successURL = ParamUtil.getString(actionRequest, "successURL");
-		boolean requireUser = ParamUtil.getBoolean(
-			actionRequest, "requireUser");
+        boolean requireUser = ParamUtil.getBoolean(
+            actionRequest, "requireUser");
 
 		boolean sendAsEmail = ParamUtil.getBoolean(
 			actionRequest, "sendAsEmail");
@@ -137,8 +130,10 @@ public class ConfigurationActionImpl extends BaseConfigurationAction {
 			return;
 		}
 
-		preferences.setValue("title", title);
-		preferences.setValue("description", description);
+		LocalizationUtil.setLocalizedPreferencesValues(
+			actionRequest, preferences, "title");
+		LocalizationUtil.setLocalizedPreferencesValues(
+			actionRequest, preferences, "description");
 		preferences.setValue("requireCaptcha", String.valueOf(requireCaptcha));
 		preferences.setValue("requireUser", String.valueOf(requireUser));
 		preferences.setValue("successURL", successURL);
@@ -161,10 +156,11 @@ public class ConfigurationActionImpl extends BaseConfigurationAction {
 				ParamUtil.getString(actionRequest, "formFieldsIndexes"), 0);
 
 			for (int formFieldsIndex : formFieldsIndexes) {
-				String fieldLabel = ParamUtil.getString(
-					actionRequest, "fieldLabel" + formFieldsIndex);
+				Map<Locale, String> fieldLabelMap =
+					LocalizationUtil.getLocalizationMap(
+						actionRequest, "fieldLabel" + formFieldsIndex);
 
-				if (Validator.isNull(fieldLabel)) {
+				if (Validator.isNull(fieldLabelMap.get(defaultLocale))) {
 					continue;
 				}
 
@@ -172,8 +168,9 @@ public class ConfigurationActionImpl extends BaseConfigurationAction {
 					actionRequest, "fieldType" + formFieldsIndex);
 				boolean fieldOptional = ParamUtil.getBoolean(
 					actionRequest, "fieldOptional" + formFieldsIndex);
-				String fieldOptions = ParamUtil.getString(
-					actionRequest, "fieldOptions" + formFieldsIndex);
+				Map<Locale, String> fieldOptionsMap =
+					LocalizationUtil.getLocalizationMap(
+						actionRequest, "fieldOptions" + formFieldsIndex);
 				String fieldValidationScript = ParamUtil.getString(
 					actionRequest, "fieldValidationScript" + formFieldsIndex);
 				String fieldValidationErrorMessage = ParamUtil.getString(
@@ -187,11 +184,27 @@ public class ConfigurationActionImpl extends BaseConfigurationAction {
 						actionRequest, "invalidValidationDefinition" + i);
 				}
 
-				preferences.setValue("fieldLabel" + i, fieldLabel);
+				for (Locale locale : fieldLabelMap.keySet()) {
+					String languageId = LocaleUtil.toLanguageId(locale);
+					String fieldLabelValue = fieldLabelMap.get(locale);
+					String fieldOptionsValue = fieldOptionsMap.get(locale);
+
+					if (Validator.isNotNull(fieldLabelValue)) {
+						LocalizationUtil.setPreferencesValue(
+							preferences, "fieldLabel" + i, languageId,
+							fieldLabelValue);
+					}
+
+					if (Validator.isNotNull(fieldOptionsValue)) {
+						LocalizationUtil.setPreferencesValue(
+							preferences, "fieldOptions" + i, languageId,
+							fieldOptionsValue);
+					}
+				}
+
 				preferences.setValue("fieldType" + i, fieldType);
 				preferences.setValue(
 					"fieldOptional" + i, String.valueOf(fieldOptional));
-				preferences.setValue("fieldOptions" + i, fieldOptions);
 				preferences.setValue(
 					"fieldValidationScript" + i, fieldValidationScript);
 				preferences.setValue(
@@ -207,14 +220,28 @@ public class ConfigurationActionImpl extends BaseConfigurationAction {
 
 			// Clear previous preferences that are now blank
 
-			String fieldLabel = preferences.getValue(
-				"fieldLabel" + i, StringPool.BLANK);
+			String fieldLabel = LocalizationUtil.getPreferencesValue(
+				preferences, "fieldLabel" + i, defaultLanguageId);
 
 			while (Validator.isNotNull(fieldLabel)) {
-				preferences.setValue("fieldLabel" + i, StringPool.BLANK);
+				Map<Locale, String> fieldLabelMap =
+					LocalizationUtil.getLocalizationMap(
+						actionRequest, "fieldLabel" + i);
+
+				for (Locale locale : fieldLabelMap.keySet()) {
+					String languageId = LocaleUtil.toLanguageId(locale);
+
+					LocalizationUtil.setPreferencesValue(
+						preferences, "fieldLabel" + i, languageId,
+						StringPool.BLANK);
+
+					LocalizationUtil.setPreferencesValue(
+						preferences, "fieldOptions" + i, languageId,
+						StringPool.BLANK);
+				}
+
 				preferences.setValue("fieldType" + i, StringPool.BLANK);
 				preferences.setValue("fieldOptional" + i, StringPool.BLANK);
-				preferences.setValue("fieldOptions" + i, StringPool.BLANK);
 				preferences.setValue(
 					"fieldValidationScript" + i, StringPool.BLANK);
 				preferences.setValue(
@@ -222,8 +249,8 @@ public class ConfigurationActionImpl extends BaseConfigurationAction {
 
 				i++;
 
-				fieldLabel = preferences.getValue(
-					"fieldLabel" + i, StringPool.BLANK);
+				fieldLabel = LocalizationUtil.getPreferencesValue(
+					preferences, "fieldLabel" + i, defaultLanguageId);
 			}
 		}
 
@@ -240,7 +267,14 @@ public class ConfigurationActionImpl extends BaseConfigurationAction {
 			RenderResponse renderResponse)
 		throws Exception {
 
-		return "/configuration.jsp";
+		String cmd = ParamUtil.getString(renderRequest, Constants.CMD);
+
+		if (cmd.equals(Constants.ADD)) {
+			return "/edit_field.jsp";
+		}
+		else {
+			return "/configuration.jsp";
+		}
 	}
 
 }

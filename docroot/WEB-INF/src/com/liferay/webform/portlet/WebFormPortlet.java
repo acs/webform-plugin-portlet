@@ -1,23 +1,15 @@
 /**
- * Copyright (c) 2000-2009 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
  *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
  */
 
 package com.liferay.webform.portlet;
@@ -36,7 +28,10 @@ import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -47,12 +42,9 @@ import com.liferay.portlet.expando.model.ExpandoRow;
 import com.liferay.portlet.expando.service.ExpandoRowLocalServiceUtil;
 import com.liferay.portlet.expando.service.ExpandoTableLocalServiceUtil;
 import com.liferay.portlet.expando.service.ExpandoValueLocalServiceUtil;
-import com.liferay.util.bridges.jsp.JSPPortlet;
+import com.liferay.util.bridges.mvc.MVCPortlet;
 import com.liferay.util.servlet.PortletResponseUtil;
 import com.liferay.webform.util.WebFormUtil;
-
-
-import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -65,26 +57,25 @@ import javax.mail.internet.InternetAddress;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
-import javax.portlet.PortletException;
 import javax.portlet.PortletPreferences;
 import javax.portlet.ResourceRequest;
 import javax.portlet.ResourceResponse;
 
 /**
- * <a href="WebFormPortlet.java.html"><b><i>View Source</i></b></a>
- *
  * @author Daniel Weisser
  * @author Jorge Ferrer
  * @author Alberto Montero
  * @author Julio Camarero
  * @author Brian Wing Shun Chan
- *
  */
-public class WebFormPortlet extends JSPPortlet {
+public class WebFormPortlet extends MVCPortlet {
 
 	public void deleteData(
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
 
 		PortletPreferences preferences =
 			PortletPreferencesFactoryUtil.getPortletSetup(actionRequest);
@@ -94,7 +85,8 @@ public class WebFormPortlet extends JSPPortlet {
 
 		if (Validator.isNotNull(databaseTableName)) {
 			ExpandoTableLocalServiceUtil.deleteTable(
-				WebFormUtil.class.getName(), databaseTableName);
+				themeDisplay.getCompanyId(), WebFormUtil.class.getName(),
+				databaseTableName);
 		}
 	}
 
@@ -102,11 +94,11 @@ public class WebFormPortlet extends JSPPortlet {
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
+		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
 		String portletId = (String)actionRequest.getAttribute(
 			WebKeys.PORTLET_ID);
-
-        ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
-            WebKeys.THEME_DISPLAY);
 
         Long userId =  themeDisplay.getUserId();
 
@@ -154,7 +146,7 @@ public class WebFormPortlet extends JSPPortlet {
 			fieldsMap.put(fieldLabel, actionRequest.getParameter("field" + i));
 		}
 
-		fieldsMap.put("userId", Long.toString(userId));
+        fieldsMap.put("userId", Long.toString(userId));
 
 		Set<String> validationErrors = null;
 
@@ -190,7 +182,8 @@ public class WebFormPortlet extends JSPPortlet {
 				}
 
 				databaseSuccess = saveDatabase(
-					fieldsMap, preferences, databaseTableName);
+					themeDisplay.getCompanyId(), fieldsMap, preferences,
+					databaseTableName);
 			}
 
 			if (saveToFile) {
@@ -218,8 +211,7 @@ public class WebFormPortlet extends JSPPortlet {
 	}
 
 	public void serveResource(
-			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
-		throws IOException, PortletException {
+		ResourceRequest resourceRequest, ResourceResponse resourceResponse) {
 
 		String cmd = ParamUtil.getString(resourceRequest, Constants.CMD);
 
@@ -240,6 +232,9 @@ public class WebFormPortlet extends JSPPortlet {
 			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
 		throws Exception {
 
+		ThemeDisplay themeDisplay = (ThemeDisplay)resourceRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
 		PortletPreferences preferences =
 			PortletPreferencesFactoryUtil.getPortletSetup(resourceRequest);
 
@@ -255,6 +250,9 @@ public class WebFormPortlet extends JSPPortlet {
 			String fieldLabel = preferences.getValue(
 				"fieldLabel" + i, StringPool.BLANK);
 
+			String localizedfieldLabel = LocalizationUtil.getPreferencesValue(
+				preferences, "fieldLabel" + i, themeDisplay.getLanguageId());
+
 			if (Validator.isNull(fieldLabel)) {
 				break;
 			}
@@ -262,7 +260,7 @@ public class WebFormPortlet extends JSPPortlet {
 			fieldLabels.add(fieldLabel);
 
 			sb.append("\"");
-			sb.append(fieldLabel.replaceAll("\"", "\\\""));
+			sb.append(localizedfieldLabel.replaceAll("\"", "\\\""));
 			sb.append("\";");
 		}
 
@@ -271,12 +269,13 @@ public class WebFormPortlet extends JSPPortlet {
 
 		if (Validator.isNotNull(databaseTableName)) {
 			List<ExpandoRow> rows = ExpandoRowLocalServiceUtil.getRows(
-				WebFormUtil.class.getName(), databaseTableName,
-				QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+				themeDisplay.getCompanyId(), WebFormUtil.class.getName(),
+				databaseTableName, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
 
 			for (ExpandoRow row : rows) {
 				for (String fieldName : fieldLabels) {
 					String data = ExpandoValueLocalServiceUtil.getData(
+						themeDisplay.getCompanyId(),
 						WebFormUtil.class.getName(), databaseTableName,
 						fieldName, row.getClassPK(), StringPool.BLANK);
 
@@ -315,12 +314,12 @@ public class WebFormPortlet extends JSPPortlet {
 		return sb.toString();
 	}
 
-	private boolean saveDatabase(
-			Map<String,String> fieldsMap, PortletPreferences preferences,
-			String databaseTableName)
+	protected boolean saveDatabase(
+			long companyId, Map<String,String> fieldsMap,
+			PortletPreferences preferences, String databaseTableName)
 		throws Exception {
 
-		WebFormUtil.checkTable(databaseTableName, preferences);
+		WebFormUtil.checkTable(companyId, databaseTableName, preferences);
 
 		long classPK = CounterLocalServiceUtil.increment(
 			WebFormUtil.class.getName());
@@ -330,8 +329,8 @@ public class WebFormPortlet extends JSPPortlet {
 				String fieldValue = fieldsMap.get(fieldLabel);
 
 				ExpandoValueLocalServiceUtil.addValue(
-					WebFormUtil.class.getName(), databaseTableName, fieldLabel,
-					classPK, fieldValue);
+					companyId, WebFormUtil.class.getName(), databaseTableName,
+					fieldLabel, classPK, fieldValue);
 			}
 
 			return true;
@@ -392,7 +391,24 @@ public class WebFormPortlet extends JSPPortlet {
 
 			String body = getMailBody(fieldsMap);
 
-			InternetAddress fromAddress = new InternetAddress(emailAddress);
+			InternetAddress fromAddress = null;
+
+			try {
+				String smtpUser = PropsUtil.get(
+					PropsKeys.MAIL_SESSION_MAIL_SMTP_USER);
+
+				if (Validator.isNotNull(smtpUser)) {
+					fromAddress = new InternetAddress(smtpUser);
+				}
+			}
+			catch (Exception e) {
+				_log.error(e, e);
+			}
+
+			if (fromAddress == null) {
+				fromAddress = new InternetAddress(emailAddress);
+			}
+
 			InternetAddress toAddress = new InternetAddress(emailAddress);
 
 			MailMessage mailMessage = new MailMessage(
