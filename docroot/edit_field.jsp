@@ -1,4 +1,4 @@
-<%
+<%--
 /**
  * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
  *
@@ -12,13 +12,13 @@
  * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
  * details.
  */
-%>
+--%>
 
-<%@ include file="init.jsp" %>
+<%@ include file="/init.jsp" %>
 
 <%
 int index = ParamUtil.getInteger(renderRequest, "index", GetterUtil.getInteger((String)request.getAttribute("configuration.jsp-index")));
-int formFieldsIndex = GetterUtil.getInteger((String)request.getAttribute("configuration.jsp-formFieldsindex"));
+int formFieldsIndex = GetterUtil.getInteger((String)request.getAttribute("configuration.jsp-formFieldsIndex"));
 boolean fieldsEditingDisabled = GetterUtil.getBoolean((String)request.getAttribute("configuration.jsp-fieldsEditingDisabled"));
 
 String fieldLabelXml = LocalizationUtil.getLocalizationXmlFromPreferences(preferences, renderRequest, "fieldLabel" + formFieldsIndex);
@@ -35,6 +35,8 @@ if (WebFormUtil.VALIDATION_SCRIPT_ENABLED) {
 	fieldValidationErrorMessage = PrefsParamUtil.getString(preferences, request, "fieldValidationErrorMessage" + formFieldsIndex);
 }
 %>
+
+<liferay-ui:error key='<%= "fieldSizeInvalid" + formFieldsIndex %>' message="please-enter-no-more-than-75-characters" />
 
 <div class="aui-field-row field-row">
 	<div class="field-title">
@@ -137,7 +139,7 @@ if (WebFormUtil.VALIDATION_SCRIPT_ENABLED) {
 						</aui:column>
 						<aui:column columnWidth="50">
 							<div class="syntax-help">
-								<jsp:include page="/script_help.jsp" />
+								<liferay-util:include page="/script_help.jsp" servletContext="<%= application %>" />
 							</div>
 						</aui:column>
 					</div>

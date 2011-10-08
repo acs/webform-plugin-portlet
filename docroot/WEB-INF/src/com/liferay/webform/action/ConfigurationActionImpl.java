@@ -14,10 +14,10 @@
 
 package com.liferay.webform.action;
 
-import com.liferay.portal.kernel.portlet.BaseConfigurationAction;
+import com.liferay.portal.kernel.portlet.DefaultConfigurationAction;
 import com.liferay.portal.kernel.servlet.SessionErrors;
-import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -25,13 +25,16 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portlet.PortletPreferencesFactoryUtil;
+import com.liferay.portlet.expando.DuplicateColumnNameException;
 import com.liferay.webform.util.WebFormUtil;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -46,37 +49,22 @@ import javax.portlet.RenderResponse;
  * @author Julio Camarero
  * @author Brian Wing Shun Chan
  */
-public class ConfigurationActionImpl extends BaseConfigurationAction {
+public class ConfigurationActionImpl extends DefaultConfigurationAction {
 
+	@Override
 	public void processAction(
 			PortletConfig portletConfig, ActionRequest actionRequest,
 			ActionResponse actionResponse)
 		throws Exception {
 
-		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
+		validateFields(actionRequest);
+
+		if (!SessionErrors.isEmpty(actionRequest)) {
+			return;
+		}
 
 		Locale defaultLocale = LocaleUtil.getDefault();
 		String defaultLanguageId = LocaleUtil.toLanguageId(defaultLocale);
-
-		String title = ParamUtil.getString(
-			actionRequest, "title" + StringPool.UNDERLINE + defaultLanguageId);
-		boolean requireCaptcha = ParamUtil.getBoolean(
-			actionRequest, "requireCaptcha");
-		String successURL = ParamUtil.getString(actionRequest, "successURL");
-        boolean requireUser = ParamUtil.getBoolean(
-            actionRequest, "requireUser");
-
-		boolean sendAsEmail = ParamUtil.getBoolean(
-			actionRequest, "sendAsEmail");
-		String subject = ParamUtil.getString(actionRequest, "subject");
-		String emailAddress = ParamUtil.getString(
-			actionRequest, "emailAddress");
-
-		boolean saveToDatabase = ParamUtil.getBoolean(
-			actionRequest, "saveToDatabase");
-
-		boolean saveToFile = ParamUtil.getBoolean(actionRequest, "saveToFile");
-		String fileName = ParamUtil.getString(actionRequest, "fileName");
 
 		boolean updateFields = ParamUtil.getBoolean(
 			actionRequest, "updateFields");
@@ -88,61 +76,10 @@ public class ConfigurationActionImpl extends BaseConfigurationAction {
 			PortletPreferencesFactoryUtil.getPortletSetup(
 				actionRequest, portletResource);
 
-		if (Validator.isNull(title)) {
-			SessionErrors.add(actionRequest, "titleRequired");
-		}
-
-		if (Validator.isNull(subject)) {
-			SessionErrors.add(actionRequest, "subjectRequired");
-		}
-
-		if (!sendAsEmail && !saveToDatabase && !saveToFile) {
-			SessionErrors.add(actionRequest, "handlingRequired");
-		}
-
-		if (sendAsEmail) {
-			if (Validator.isNull(emailAddress)) {
-				SessionErrors.add(actionRequest, "emailAddressRequired");
-			}
-			else if (!Validator.isEmailAddress(emailAddress)) {
-				SessionErrors.add(actionRequest, "emailAddressInvalid");
-			}
-		}
-
-		if (saveToFile) {
-
-			// Check if server can create a file as specified
-
-			try {
-				FileOutputStream fos = new FileOutputStream(fileName, true);
-
-				fos.close();
-			}
-			catch (SecurityException es) {
-				SessionErrors.add(actionRequest, "fileNameInvalid");
-			}
-			catch (FileNotFoundException fnfe) {
-				SessionErrors.add(actionRequest, "fileNameInvalid");
-			}
-		}
-
-		if (!SessionErrors.isEmpty(actionRequest)) {
-			return;
-		}
-
 		LocalizationUtil.setLocalizedPreferencesValues(
 			actionRequest, preferences, "title");
 		LocalizationUtil.setLocalizedPreferencesValues(
 			actionRequest, preferences, "description");
-		preferences.setValue("requireCaptcha", String.valueOf(requireCaptcha));
-		preferences.setValue("requireUser", String.valueOf(requireUser));
-		preferences.setValue("successURL", successURL);
-		preferences.setValue("sendAsEmail", String.valueOf(sendAsEmail));
-		preferences.setValue("subject", subject);
-		preferences.setValue("emailAddress", emailAddress);
-		preferences.setValue("saveToDatabase", String.valueOf(saveToDatabase));
-		preferences.setValue("saveToFile", String.valueOf(saveToFile));
-		preferences.setValue("fileName", fileName);
 
 		if (updateFields) {
 			int i = 1;
@@ -256,12 +193,12 @@ public class ConfigurationActionImpl extends BaseConfigurationAction {
 
 		if (SessionErrors.isEmpty(actionRequest)) {
 			preferences.store();
-
-			SessionMessages.add(
-				actionRequest, portletConfig.getPortletName() + ".doConfigure");
 		}
+
+		super.processAction(portletConfig, actionRequest, actionResponse);
 	}
 
+	@Override
 	public String render(
 			PortletConfig portletConfig, RenderRequest renderRequest,
 			RenderResponse renderResponse)
@@ -275,6 +212,137 @@ public class ConfigurationActionImpl extends BaseConfigurationAction {
 		else {
 			return "/configuration.jsp";
 		}
+	}
+
+	protected void validateFields(ActionRequest actionRequest)
+		throws Exception {
+
+		Locale defaultLocale = LocaleUtil.getDefault();
+		String defaultLanguageId = LocaleUtil.toLanguageId(defaultLocale);
+
+		String title = ParamUtil.getString(
+			actionRequest, "title" + StringPool.UNDERLINE + defaultLanguageId);
+
+		boolean sendAsEmail = GetterUtil.getBoolean(
+			getParameter(actionRequest, "sendAsEmail"));
+		String subject = getParameter(actionRequest, "subject");
+
+		boolean saveToDatabase = GetterUtil.getBoolean(
+			getParameter(actionRequest, "saveToDatabase"));
+
+		boolean saveToFile = GetterUtil.getBoolean(
+			getParameter(actionRequest, "saveToFile"));
+
+		if (Validator.isNull(title)) {
+			SessionErrors.add(actionRequest, "titleRequired");
+		}
+
+		if (!sendAsEmail && !saveToDatabase && !saveToFile) {
+			SessionErrors.add(actionRequest, "handlingRequired");
+		}
+
+		if (sendAsEmail) {
+			if (Validator.isNull(subject)) {
+				SessionErrors.add(actionRequest, "subjectRequired");
+			}
+
+			String[] emailAdresses = WebFormUtil.split(
+				getParameter(actionRequest, "emailAddress"));
+
+			if (emailAdresses.length == 0) {
+				SessionErrors.add(actionRequest, "emailAddressRequired");
+			}
+
+			for (String emailAdress : emailAdresses) {
+				emailAdress = emailAdress.trim();
+
+				if (!Validator.isEmailAddress(emailAdress)) {
+					SessionErrors.add(actionRequest, "emailAddressInvalid");
+				}
+			}
+		}
+
+		if (saveToFile) {
+			String fileName = getParameter(actionRequest, "fileName");
+
+			// Check if server can create a file as specified
+
+			try {
+				FileOutputStream fileOutputStream = new FileOutputStream(
+					fileName, true);
+
+				fileOutputStream.close();
+			}
+			catch (SecurityException es) {
+				SessionErrors.add(actionRequest, "fileNameInvalid");
+			}
+			catch (FileNotFoundException fnfe) {
+				SessionErrors.add(actionRequest, "fileNameInvalid");
+			}
+		}
+
+		if (saveToDatabase) {
+			int i = 1;
+
+			String languageId = LocaleUtil.toLanguageId(
+				actionRequest.getLocale());
+
+			String fieldLabel = ParamUtil.getString(
+				actionRequest, "fieldLabel" + i + "_" + languageId);
+
+			while ((i == 1) || (Validator.isNotNull(fieldLabel))) {
+				if (fieldLabel.length() > 75 ) {
+					SessionErrors.add(actionRequest, "fieldSizeInvalid" + i);
+				}
+
+				i++;
+
+				fieldLabel = ParamUtil.getString(
+					actionRequest, "fieldLabel" + i + "_" + languageId);
+			}
+		}
+
+		if (!validateUniqueFieldNames(actionRequest)) {
+			SessionErrors.add(
+				actionRequest, DuplicateColumnNameException.class.getName());
+		}
+	}
+
+	protected boolean validateUniqueFieldNames(ActionRequest actionRequest) {
+		Locale defaultLocale = LocaleUtil.getDefault();
+
+		Set<String> localizedUniqueFieldNames = new HashSet<String>();
+
+		int[] formFieldsIndexes = StringUtil.split(
+			ParamUtil.getString(actionRequest, "formFieldsIndexes"), 0);
+
+		for (int formFieldsIndex : formFieldsIndexes) {
+			Map<Locale, String> fieldLabelMap =
+				LocalizationUtil.getLocalizationMap(
+					actionRequest, "fieldLabel" + formFieldsIndex);
+
+			if (Validator.isNull(fieldLabelMap.get(defaultLocale))) {
+				continue;
+			}
+
+			for (Locale locale : fieldLabelMap.keySet()) {
+				String fieldLabelValue = fieldLabelMap.get(locale);
+
+				if (Validator.isNull(fieldLabelValue)) {
+					continue;
+				}
+
+				String languageId = LocaleUtil.toLanguageId(locale);
+
+				if (!localizedUniqueFieldNames.add(
+						languageId + "_" + fieldLabelValue)) {
+
+					return false;
+				}
+			}
+		}
+
+		return true;
 	}
 
 }

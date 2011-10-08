@@ -1,4 +1,4 @@
-<%
+<%--
 /**
  * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
  *
@@ -12,7 +12,7 @@
  * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
  * details.
  */
-%>
+--%>
 
 <%@ include file="/init.jsp" %>
 
@@ -21,19 +21,19 @@ String redirect = ParamUtil.getString(renderRequest, "redirect");
 
 String titleXml = LocalizationUtil.getLocalizationXmlFromPreferences(preferences, renderRequest, "title");
 String descriptionXml = LocalizationUtil.getLocalizationXmlFromPreferences(preferences, renderRequest, "description");
-boolean requireCaptcha = PrefsParamUtil.getBoolean(preferences, renderRequest, "requireCaptcha");
-String successURL = PrefsParamUtil.getString(preferences, renderRequest, "successURL");
-boolean requireUser = PrefsParamUtil.getBoolean(preferences, request, "requireUser");
+boolean requireCaptcha = GetterUtil.getBoolean(preferences.getValue("requireCaptcha", StringPool.BLANK));
+boolean requireUser = GetterUtil.getBoolean(preferences.getValue("requireUser", StringPool.BLANK));
+String successURL = preferences.getValue("successURL", StringPool.BLANK);
 
-boolean sendAsEmail = PrefsParamUtil.getBoolean(preferences, renderRequest, "sendAsEmail");
-String subject = PrefsParamUtil.getString(preferences, renderRequest, "subject");
-String emailAddress = PrefsParamUtil.getString(preferences, renderRequest, "emailAddress");
+boolean sendAsEmail = GetterUtil.getBoolean(preferences.getValue("sendAsEmail", StringPool.BLANK));
+String subject = preferences.getValue("subject", StringPool.BLANK);
+String emailAddress = preferences.getValue("emailAddress", StringPool.BLANK);
 
-boolean saveToDatabase = PrefsParamUtil.getBoolean(preferences, renderRequest, "saveToDatabase");
+boolean saveToDatabase = GetterUtil.getBoolean(preferences.getValue("saveToDatabase", StringPool.BLANK));
 String databaseTableName = preferences.getValue("databaseTableName", StringPool.BLANK);
 
-boolean saveToFile = PrefsParamUtil.getBoolean(preferences, renderRequest, "saveToFile");
-String fileName = PrefsParamUtil.getString(preferences, renderRequest, "fileName");
+boolean saveToFile = GetterUtil.getBoolean(preferences.getValue("saveToFile", StringPool.BLANK));
+String fileName = preferences.getValue("fileName", StringPool.BLANK);
 
 boolean fieldsEditingDisabled = false;
 
@@ -48,54 +48,56 @@ if (WebFormUtil.getTableRowsCount(company.getCompanyId(), databaseTableName) > 0
 	<aui:input name="<%= Constants.CMD %>" type="hidden" value="<%= Constants.UPDATE %>" />
 	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
 
-	<liferay-ui:panel-container id="webFormConfiguration" extended="<%= Boolean.TRUE %>" persistState="<%= true %>">
-		<liferay-ui:panel id="webFormGeneral" title='<%= LanguageUtil.get(pageContext, "form-information") %>' collapsible="<%= true %>" persistState="<%= true %>" extended="<%= true %>">
+	<liferay-ui:error exception="<%= DuplicateColumnNameException.class %>" message="please-enter-unique-field-names" />
+
+	<liferay-ui:panel-container extended="<%= Boolean.TRUE %>" id="webFormConfiguration" persistState="<%= true %>">
+		<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" id="webFormGeneral" persistState="<%= true %>" title="form-information">
 			<aui:fieldset>
 				<liferay-ui:error key="titleRequired" message="please-enter-a-title" />
 
 				<aui:field-wrapper cssClass="lfr-input-text-container" label="title">
-					<liferay-ui:input-localized  name="title" xml="<%= titleXml %>" />
+					<liferay-ui:input-localized name="title" xml="<%= titleXml %>" />
 				</aui:field-wrapper>
 
 				<aui:field-wrapper cssClass="lfr-textarea-container" label="description">
 					<liferay-ui:input-localized name="description" type="textarea" xml="<%= descriptionXml %>" />
 				</aui:field-wrapper>
 
-				<aui:input name="requireCaptcha" type="checkbox" value="<%= requireCaptcha %>" />
+				<aui:input name="preferences--requireCaptcha--" type="checkbox" value="<%= requireCaptcha %>" />
+				
+                <aui:input name="preferences--requireUser--" type="checkbox" value="<%= requireUser %>" />
 
-				<aui:input cssClass="lfr-input-text-container" label="redirect-url-on-success" name="successURL" value="<%= HtmlUtil.toInputSafe(successURL) %>" />
-
-				<aui:input label="require-user" name="requireUser" type="checkbox" value="<%= requireUser %>" />
+				<aui:input cssClass="lfr-input-text-container" label="redirect-url-on-success" name="preferences--successURL--" value="<%= HtmlUtil.toInputSafe(successURL) %>" />
 			</aui:fieldset>
 		</liferay-ui:panel>
 
-		<liferay-ui:panel id='webFormData' title='<%= LanguageUtil.get(pageContext, "handling-of-form-data") %>' collapsible="<%= true %>" persistState="<%= true %>" extended="<%= true %>">
+		<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" id="webFormData" persistState="<%= true %>" title="handling-of-form-data">
 			<aui:fieldset cssClass="handle-data" label="email">
 				<liferay-ui:error key="subjectRequired" message="please-enter-a-subject" />
 				<liferay-ui:error key="handlingRequired" message="please-select-an-action-for-the-handling-of-form-data" />
 				<liferay-ui:error key="emailAddressInvalid" message="please-enter-a-valid-email-address" />
 				<liferay-ui:error key="emailAddressRequired" message="please-enter-an-email-address" />
-				<liferay-ui:error key="fileNameInvalid" message="please-enter-a-valid-path-and-filename" />
+				<liferay-ui:error key="fileNameInvalid" message="please-enter-a-valid-path-and-file-name" />
 
-				<aui:input inlineLabel="left" label="send-as-email" name="sendAsEmail" type="checkbox" value="<%= sendAsEmail %>" />
+				<aui:input label="send-as-email" name="preferences--sendAsEmail--" type="checkbox" value="<%= sendAsEmail %>" />
 
-				<aui:input cssClass="lfr-input-text-container" name="subject" value="<%= subject %>" />
+				<aui:input cssClass="lfr-input-text-container" name="preferences--subject--" value="<%= subject %>" />
 
-				<aui:input cssClass="lfr-input-text-container" name="emailAddress" value="<%= emailAddress %>" />
+				<aui:input cssClass="lfr-input-text-container" helpMessage="add-email-addresses-separated-by-commas" label="email-addresses" name="preferences--emailAddress--" value="<%= emailAddress %>" />
 			</aui:fieldset>
 
 			<aui:fieldset cssClass="handle-data" label="database">
-				<aui:input name="saveToDatabase" type="checkbox" value="<%= saveToDatabase %>" />
+				<aui:input name="preferences--saveToDatabase--" type="checkbox" value="<%= saveToDatabase %>" />
 			</aui:fieldset>
 
 			<aui:fieldset cssClass="handle-data" label="file">
-				<aui:input name="saveToFile" type="checkbox" value="<%= saveToFile %>" />
+				<aui:input name="preferences--saveToFile--" type="checkbox" value="<%= saveToFile %>" />
 
-				<aui:input cssClass="lfr-input-text-container" label="path-and-file-name" name="filename" value="<%= fileName %>" />
+				<aui:input cssClass="lfr-input-text-container" label="path-and-file-name" name="preferences--fileName--" value="<%= fileName %>" />
 			</aui:fieldset>
 		</liferay-ui:panel>
 
-		<liferay-ui:panel id='webFormFields' title='<%= LanguageUtil.get(pageContext, "form-fields") %>' collapsible="<%= true %>" persistState="<%= true %>" extended="<%= true %>">
+		<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" id="webFormFields" persistState="<%= true %>" title="form-fields">
 			<aui:fieldset cssClass="rows-container webFields">
 				<c:if test="<%= fieldsEditingDisabled %>">
 					<div class="portlet-msg-alert">
@@ -110,7 +112,7 @@ if (WebFormUtil.getTableRowsCount(company.getCompanyId(), databaseTableName) > 0
 					String taglibExport = "submitForm(document.hrefFm, '" + exportURL + "');";
 					%>
 
-					<aui:button onclick="<%= taglibExport %>" value="export-data" />
+					<aui:button onClick="<%= taglibExport %>" value="export-data" />
 
 					<liferay-portlet:actionURL var="deleteURL" portletName="<%= portletResource %>">
 						<portlet:param name="<%= ActionRequest.ACTION_NAME %>" value="deleteData" />
@@ -121,7 +123,7 @@ if (WebFormUtil.getTableRowsCount(company.getCompanyId(), databaseTableName) > 0
 					String taglibDelete = "submitForm(document." + renderResponse.getNamespace() + "fm, '" + deleteURL + "');";
 					%>
 
-					<aui:button onclick="<%= taglibDelete %>" value="delete-data" />
+					<aui:button onClick="<%= taglibDelete %>" value="delete-data" />
 
 					<br /><br />
 				</c:if>
@@ -158,13 +160,13 @@ if (WebFormUtil.getTableRowsCount(company.getCompanyId(), databaseTableName) > 0
 
 				for (int formFieldsIndex : formFieldsIndexes) {
 					request.setAttribute("configuration.jsp-index", String.valueOf(index));
-					request.setAttribute("configuration.jsp-formFieldsindex", String.valueOf(formFieldsIndex));
+					request.setAttribute("configuration.jsp-formFieldsIndex", String.valueOf(formFieldsIndex));
 					request.setAttribute("configuration.jsp-fieldsEditingDisabled", String.valueOf(fieldsEditingDisabled));
 				%>
 
 					<div class="lfr-form-row" id="<portlet:namespace/>fieldset<%= formFieldsIndex %>">
 						<div class="row-fields">
-							<jsp:include page="edit_field.jsp" />
+							<liferay-util:include page="/edit_field.jsp" servletContext="<%= application %>" />
 						</div>
 					</div>
 
@@ -221,7 +223,9 @@ if (!fieldsEditingDisabled) {
 		if (value == 'paragraph') {
 			var inputName = labelName.one('input');
 
-			inputName.val('<liferay-ui:message key="paragraph" />');
+			var formFieldsIndex = select.attr('id').match(/\d+$/);
+
+			inputName.val('<liferay-ui:message key="paragraph" />' + formFieldsIndex);
 			inputName.fire('change');
 
 			labelName.hide();
@@ -245,10 +249,11 @@ if (!fieldsEditingDisabled) {
 	webFields.all('select').each(toggleOptions);
 
 	<c:if test="<%= !fieldsEditingDisabled %>">
-		A.delegate('change', toggleOptions, webFields, 'select');
-		A.delegate('click', toggleValidationOptions, webFields, '.validation-link');
+		webFields.delegate(['change', 'click', 'keydown'], toggleOptions, 'select');
 
-		A.delegate(
+		webFields.delegate('click', toggleValidationOptions, '.validation-link');
+
+		webFields.delegate(
 			'change',
 			function(event) {
 				var input = event.currentTarget;
@@ -259,7 +264,6 @@ if (!fieldsEditingDisabled) {
 					label.html(input.get('value'));
 				}
 			},
-			webFields,
 			'.label-name input'
 		);
 

@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portlet.expando.NoSuchTableException;
 import com.liferay.portlet.expando.model.ExpandoColumnConstants;
@@ -87,19 +88,26 @@ public class WebFormUtil {
 			String fieldLabel = preferences.getValue(
 				"fieldLabel" + i, StringPool.BLANK);
 
+			String fieldType = preferences.getValue(
+				"fieldType" + i, StringPool.BLANK);
+
 			while ((i == 1) || (Validator.isNotNull(fieldLabel))) {
-				ExpandoColumnLocalServiceUtil.addColumn(
-					expandoTable.getTableId(), fieldLabel,
-					ExpandoColumnConstants.STRING);
+				if (!fieldType.equalsIgnoreCase("paragraph")) {
+					ExpandoColumnLocalServiceUtil.addColumn(
+						expandoTable.getTableId(), fieldLabel,
+						ExpandoColumnConstants.STRING);
+				}
 
 				i++;
 
 				fieldLabel = preferences.getValue(
 					"fieldLabel" + i, StringPool.BLANK);
 			}
+
             ExpandoColumnLocalServiceUtil.addColumn(
-                   expandoTable.getTableId(), "userId",
-                   ExpandoColumnConstants.STRING);
+                expandoTable.getTableId(), "userId",
+                ExpandoColumnConstants.STRING);
+
 		}
 
 		return expandoTable;
@@ -197,7 +205,14 @@ public class WebFormUtil {
 			sb.append("fieldsMap['");
 			sb.append(key);
 			sb.append("'] = '");
-			sb.append(fieldsMap.get(key));
+
+			String value = StringUtil.replace(
+				fieldsMap.get(key),
+				new String[] {"\r\n", "\r", "\n"},
+				new String[] {"\\n", "\\n", "\\n"});
+
+			sb.append(value);
+
 			sb.append("';\n");
 		}
 
