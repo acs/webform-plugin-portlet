@@ -64,7 +64,7 @@ if (WebFormUtil.getTableRowsCount(company.getCompanyId(), databaseTableName) > 0
 				</aui:field-wrapper>
 
 				<aui:input name="preferences--requireCaptcha--" type="checkbox" value="<%= requireCaptcha %>" />
-				
+
                 <aui:input name="preferences--requireUser--" type="checkbox" value="<%= requireUser %>" />
 
 				<aui:input cssClass="lfr-input-text-container" label="redirect-url-on-success" name="preferences--successURL--" value="<%= HtmlUtil.toInputSafe(successURL) %>" />

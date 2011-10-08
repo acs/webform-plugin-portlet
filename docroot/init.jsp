@@ -24,7 +24,9 @@
 <%@ taglib uri="http://liferay.com/tld/ui" prefix="liferay-ui" %>
 <%@ taglib uri="http://liferay.com/tld/util" prefix="liferay-util" %>
 
-<%@ page import="com.liferay.portal.kernel.captcha.CaptchaMaxChallengesException" %><%@
+<%@ page import="com.liferay.portal.kernel.captcha.CaptchaMaxChallengesException" %>
+
+<%@
 page import="com.liferay.portal.kernel.captcha.CaptchaTextException" %><%@
 page import="com.liferay.portal.kernel.portlet.LiferayWindowState" %><%@
 page import="com.liferay.portal.kernel.servlet.SessionErrors" %><%@

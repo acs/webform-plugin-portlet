@@ -43,4 +43,3 @@ boolean requireUser = GetterUtil.getBoolean(preferences.getValue("requireUser", 
         <%@ include file="/form.jspf" %>
     </c:otherwise>
 </c:choose>
-
